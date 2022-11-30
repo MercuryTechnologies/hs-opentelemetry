@@ -6,6 +6,7 @@ module OpenTelemetry.Instrumentation.Persistent
   ) where
 import OpenTelemetry.Trace.Core
 import OpenTelemetry.Context
+import Control.DeepSeq (deepseq)
 import Data.Acquire.Internal
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
@@ -60,7 +61,7 @@ wrapSqlBackend attrs conn_ = do
   let hooks = emptySqlBackendHooks
         { hookGetStatement = \conn sql stmt -> do
             pure $ Statement
-              { stmtQuery = \ps -> do
+              { stmtQuery = \ps -> ps `deepseq` do
                   ctxt <- getContext
                   let spanCreator = do
                         s <- createSpan
@@ -88,7 +89,7 @@ wrapSqlBackend attrs conn_ = do
                         )
                         (stmtQueryAcquireF f)
 
-              , stmtExecute = \ps -> do
+              , stmtExecute = \ps -> ps `deepseq` do
                 inSpan' t sql (defaultSpanArguments { kind = Client, attributes = ("db.statement", toAttribute sql) : attrs }) $ \s -> do
                   annotateBasics s conn
                   stmtExecute stmt ps

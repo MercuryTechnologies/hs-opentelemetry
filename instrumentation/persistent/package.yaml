@@ -27,6 +27,7 @@ dependencies:
 - resourcet
 - unliftio # TODO, unliftio-core
 - mtl
+- deepseq
 
 library:
   # ghc-options: -Wall
