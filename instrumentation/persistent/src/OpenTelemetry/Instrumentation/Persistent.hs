@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-orphans -w #-}
 module OpenTelemetry.Instrumentation.Persistent
   ( wrapSqlBackend
   ) where
@@ -53,7 +53,7 @@ wrapSqlBackend
   -- ^ Attributes that are specific to providers like MySQL, PostgreSQL, etc.
   -> SqlBackend
   -> m SqlBackend
-wrapSqlBackend attrs conn_ = do
+wrapSqlBackend attrs conn_ = pure conn_ {- do
   tp <- getGlobalTracerProvider
   let conn = Data.Maybe.fromMaybe conn_ (lookupOriginalConnection conn_)
   -- TODO add schema to tracerOptions?
@@ -125,7 +125,7 @@ wrapSqlBackend attrs conn_ = do
               connClose conn
         }
   pure $ insertOriginalConnection conn' conn
-
+-}
 annotateBasics :: MonadIO m => Span -> SqlBackend -> m ()
 annotateBasics span conn = do
   addAttributes span
