@@ -12,7 +12,6 @@ inSpan
   -> (Span -> ConduitM i o m a)
   -> ConduitM i o m a
 inSpan t n args f = do
-  liftIO $ putStrLn "conduit.inSpan called"
   ctx <- lift getContext
   bracketP
     (createSpan t ctx n args)
