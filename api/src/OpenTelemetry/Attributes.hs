@@ -1,9 +1,11 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE StrictData #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  OpenTelemetry.Attributes
@@ -42,6 +44,7 @@ module OpenTelemetry.Attributes
   , unsafeMergeAttributesIgnoringLimits 
   ) where
 import Data.Int ( Int64 )
+import Data.List (foldl')
 import Data.Text ( Text )
 import qualified Data.HashMap.Strict as H
 import qualified Data.Text as T
@@ -73,7 +76,7 @@ emptyAttributes :: Attributes
 emptyAttributes = Attributes mempty 0 0
 
 addAttribute :: ToAttribute a => AttributeLimits -> Attributes -> Text -> a -> Attributes
-addAttribute AttributeLimits{..} Attributes{..} k v = case attributeCountLimit of
+addAttribute AttributeLimits{..} Attributes{..} !k !v = case attributeCountLimit of
   Nothing -> Attributes newAttrs newCount attributesDropped
   Just limit_ -> if newCount > limit_
     then Attributes attributes attributesCount (attributesDropped + 1)
@@ -97,7 +100,7 @@ addAttribute AttributeLimits{..} Attributes{..} k v = case attributeCountLimit o
 
 addAttributes :: ToAttribute a => AttributeLimits -> Attributes -> [(Text, a)] -> Attributes
 -- TODO, this could be done more efficiently
-addAttributes limits = foldl (\attrs' (k, v) -> addAttribute limits attrs' k v)
+addAttributes limits = foldl' (\(!attrs') (!k, !v) -> addAttribute limits attrs' k v)
 {-# INLINE addAttributes #-}
 
 getAttributes :: Attributes -> (Int, H.HashMap Text Attribute)

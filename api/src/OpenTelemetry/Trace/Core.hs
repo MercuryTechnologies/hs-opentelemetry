@@ -394,7 +394,7 @@ addAttribute :: (MonadIO m, A.ToAttribute a)
   -> a 
   -- ^ Attribute value
   -> m ()
-addAttribute (Span s) k v = liftIO $ modifyIORef s $ \i -> i
+addAttribute (Span s) k v = liftIO $ modifyIORef' s $ \i -> i `seq` i
   { spanAttributes =
       OpenTelemetry.Attributes.addAttribute
         (limitBy (spanTracer i) spanAttributeCountLimit)
@@ -411,7 +411,7 @@ addAttribute (Dropped _) _ _ = pure ()
 --
 -- @since 0.0.1.0
 addAttributes :: MonadIO m => Span -> [(Text, A.Attribute)] -> m ()
-addAttributes (Span s) attrs = liftIO $ modifyIORef s $ \i -> i
+addAttributes (Span s) attrs = liftIO $ modifyIORef' s $ \i -> i `seq` i
   { spanAttributes =
       OpenTelemetry.Attributes.addAttributes
       (limitBy (spanTracer i) spanAttributeCountLimit)
@@ -427,7 +427,7 @@ addAttributes (Dropped _) _ = pure ()
 addEvent :: MonadIO m => Span -> NewEvent -> m ()
 addEvent (Span s) NewEvent{..} = liftIO $ do
   t <- maybe getTimestamp pure newEventTimestamp
-  modifyIORef s $ \i -> i
+  modifyIORef' s $ \i -> i `seq` i
     { spanEvents = appendToBoundedCollection (spanEvents i) $
         Event
           { eventName = newEventName
@@ -447,7 +447,7 @@ addEvent (Dropped _) _ = pure ()
 --
 -- @since 0.0.1.0
 setStatus :: MonadIO m => Span -> SpanStatus -> m ()
-setStatus (Span s) st = liftIO $ modifyIORef s $ \i -> i
+setStatus (Span s) st = liftIO $ modifyIORef' s $ \i -> i `seq` i
   { spanStatus = if st > spanStatus i
       then st
       else spanStatus i
@@ -469,7 +469,7 @@ updateName :: MonadIO m =>
   -> Text
   -- ^ The new span name, which supersedes whatever was passed in when the Span was started
   -> m ()
-updateName (Span s) n = liftIO $ modifyIORef s $ \i -> i { spanName = n }
+updateName (Span s) n = liftIO $ modifyIORef' s $ \i -> i `seq` i { spanName = n }
 updateName (FrozenSpan _) _ = pure ()
 updateName (Dropped _) _ = pure ()
 
@@ -490,7 +490,7 @@ endSpan :: MonadIO m
   -> m ()
 endSpan (Span s) mts = liftIO $ do
   ts <- maybe getTimestamp pure mts
-  (alreadyFinished, frozenS) <- atomicModifyIORef s $ \i ->
+  (alreadyFinished, frozenS) <- atomicModifyIORef' s $ \i -> i `seq`
     let ref = i { spanEnd = spanEnd i <|> Just ts }
     in (ref, (isJust $ spanEnd i, ref))
   unless alreadyFinished $ do
