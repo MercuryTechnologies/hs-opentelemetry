@@ -8,6 +8,7 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE UnliftedFFITypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StrictData #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  OpenTelemetry.Util
